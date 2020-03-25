@@ -8,7 +8,7 @@ class AnkleModel:
     """
     TA muscle model adapted from Benoussaad et al. (2013)
     """
-    def __init__(self, HR, Fmax, Emin):
+    def __init__(self, Fmax, Emin):
         self.Tact = 0.01 #s (Activation constant time)
         self.Tdeact = 0.04 #s (Relaxation constant time)
         self.J = 0.0197 # kg.m^2 (Inertia of the foot around ankle)
