@@ -23,7 +23,7 @@ class AnkleModel:
         self.W = 0.56 #shape parameter of f_fl
         self.a = [2.1, -0.08, -7.97, 0.19, -1.79]
         #optimal_length_CE is the "optimal length of the fiber at which the maximal force can be generated"
-        self.optimal_length_CE = 10.0 #where do we find this value???
+        self.optimal_length_CE = 7.5 #cm - source: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3130447/
         self.m = 1.0275 #kg (mass of foot)
         self.COM = 11.45 #cm (center of mass location with respect to the ankle)
 
