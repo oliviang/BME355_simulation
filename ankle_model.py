@@ -581,17 +581,20 @@ def input(t):
     # return 0.3
     # return np.sin(t) / 2 + 0.5
     return np.sin(3*t)/3+0.6
-def trapezoid_wave(t, width=2., slope=1., amp=1.):
+
+def trapezoid_wave(t, width=1.25, slope=1., amp=0.5):
     a = slope*width*signal.sawtooth(2*np.pi*t/width, width=0.5)/4.
-    a[a>amp/2.] = amp/2.
-    a[a<-amp/2.] = -amp/2.
+    if a>amp/2.:
+        a = amp/2.
+    elif a<-amp/2.:
+        a = -amp/2.
     return a + amp/2.
 
 (x_ext_1,x_ext_2,x_ext_3,x_ext_4) = set_x_ext()
 ankle = AnkleModel()
 # sol = solve_ivp(ankle.get_derivative,[0,6],[0.8,8,-4],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,input))
-# sol = solve_ivp(ankle.get_derivative,[0,3],[0.5,-15,0],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,input))
-sol = solve_ivp(ankle.get_derivative,[0,3],[0.2,-11,-25],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,input))
+sol = solve_ivp(ankle.get_derivative,[0,3],[0.5,-15,0],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
+#sol = solve_ivp(ankle.get_derivative,[0,3],[0.2,-11,-25],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,input))
 times = sol.t
 states = sol.y.T
 
