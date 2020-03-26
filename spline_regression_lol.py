@@ -123,7 +123,8 @@ x_ext_1 = np.array([
 		[100.16876227077154, 0.8464430427336149]
 	    ])
 
-x = x_ext_1[:,0]
+
+x = 1.275*((x_ext_1[:,0])/100)
 y = x_ext_1[:,1]
 f = interp1d(x, y, fill_value="extrapolate")
 xnew = np.arange(1, 100, 0.5)
