@@ -324,35 +324,41 @@ def trapezoid_wave(t, width=0.40625, slope=2, amp=1):
     elif a<-amp/2.:
         a = -amp/2.
     return a + amp/2.
-def toe_clearance(states,times):
-    t = Symbol('t')
-    x_ext_integral = integrate(t**2,t)
-    print(type(x_ext_integral))
-    x_ext_array = [x_ext_integral(t) for t in times]
+def toe_clearance(states,x_ext_2):
+    solve = solve_ivp(differential_eqn,[0,0.406],[0.1,5,5],first_step = 0.01, max_step = 0.01, args=(x_ext_2,))
+    solutions = solve.y.T
     length_foot = 0.26
     alphaF_min = states[:,1]
-    return x_ext_array - np.sin(-alphaF_min)*length_foot
+    return solutions[:,0] - np.sin(-alphaF_min)*length_foot
+
+def differential_eqn(t,x,x_ext):
+    x1_dot = x[1]
+    x2_dot = x[2]
+    x3_dot = x_ext(t)
+    return [x1_dot, x2_dot,x3_dot]
+
+
 #0.3m
 (x_ext_1,x_ext_2,x_ext_3,x_ext_4) = set_x_ext()
 ankle = AnkleModel()
 # sol = solve_ivp(ankle.get_derivative,[0,6],[0.8,8,-4],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,input))
 #sol = solve_ivp(ankle.get_derivative,[0,3],[0.5,-15,0],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
-sol = solve_ivp(ankle.get_derivative,[0,0.40625],[0.8,-15,10],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
+sol = solve_ivp(ankle.get_derivative,[0,0.406],[0.8,-15,10], first_step = 0.01, max_step = 0.01,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
 times = sol.t
 states = sol.y.T
-toe_clear = toe_clearance(states,times)
+toe_clear = toe_clearance(states,x_ext_2)
 plt.plot(times,toe_clear)
 plt.show()
-# plt.subplot(3, 1, 1)
-# plt.plot(times,states[:,0])
-# plt.xlabel('Time (s)')
-# plt.ylabel('Activation')
-# plt.subplot(3, 1, 2)
-# plt.plot(times,states[:,1])
-# plt.xlabel('Time (s)')
-# plt.ylabel('Angle')
-# plt.subplot(3, 1, 3)
-# plt.plot(times,states[:,2])
-# plt.xlabel('Time (s)')
-# plt.ylabel('Rotational velocity')
-# plt.show()
+plt.subplot(3, 1, 1)
+plt.plot(times,states[:,0])
+plt.xlabel('Time (s)')
+plt.ylabel('Activation')
+plt.subplot(3, 1, 2)
+plt.plot(times,states[:,1])
+plt.xlabel('Time (s)')
+plt.ylabel('Angle')
+plt.subplot(3, 1, 3)
+plt.plot(times,states[:,2])
+plt.xlabel('Time (s)')
+plt.ylabel('Rotational velocity')
+plt.show()
