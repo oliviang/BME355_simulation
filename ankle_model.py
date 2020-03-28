@@ -5,7 +5,6 @@ from scipy.optimize import fsolve
 from scipy.integrate import solve_ivp,quad
 from scipy.interpolate import interp1d
 from scipy import signal
-from sympy import integrate,Symbol
 #from FESsignal import trapezoid_wave
 
 class AnkleModel:
@@ -16,9 +15,9 @@ class AnkleModel:
         self.Tact = 0.01 #s (Activation constant time)
         self.Tdeact = 0.04 #s (Relaxation constant time)
         self.J = 0.0197 # kg.m^2 (Inertia of the foot around ankle)
-        self.d = 3.7 # cm (moment arm of TA wrt ankle)
-        self.tendon_length = 22.3 #cm   Model assumes constant tendon length
-        self.resting_length_muscle_tendon = 32.1 #cm
+        self.d = 0.037 # m (moment arm of TA wrt ankle)
+        self.tendon_length = 0.223 #m   Model assumes constant tendon length
+        self.resting_length_muscle_tendon = 0.321 #m
         self.av = 1.33
         self.fv1 = 0.18
         self.fv2 = 0.023
@@ -27,9 +26,9 @@ class AnkleModel:
         self.W = 0.56 #shape parameter of f_fl
         self.a = [2.1, -0.08, -7.97, 0.19, -1.79]
         #optimal_length_CE is the "optimal length of the fiber at which the maximal force can be generated"
-        self.optimal_length_CE = 7.5 #cm - source: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3130447/
+        self.optimal_length_CE = 0.075 #m - source: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3130447/
         self.m = 1.0275 #kg (mass of foot)
-        self.COM = 11.45 #cm (center of mass location with respect to the ankle)
+        self.COM = 0.1145 #m (center of mass location with respect to the ankle)
 
     def F_m(self, x, x_ext):
         """
@@ -56,7 +55,7 @@ class AnkleModel:
        """
         v_ce = self.d*(x_ext[3]-x[2]) # muscle contraction speed
         if v_ce < 0:
-            return (1-v_ce/self.vmax)/(1+v_ce/(self.vmax*self.fv1))
+            return (1-(v_ce/self.vmax))/(1+(v_ce/(self.vmax*self.fv1)))
         else:
             return (1+self.av*(v_ce/self.fv2))/(1+(v_ce/self.fv2))
         
@@ -76,7 +75,7 @@ class AnkleModel:
         :return: torque of the foot around the ankle due to gravity
         """
         g = 9.81 #gravity acceleration
-        return self.m*self.COM*np.cos(x[1])*g
+        return self.m*self.COM*np.cos(np.deg2rad(x[1]))*g
 
     def T_acc(self, x, x_ext):
         """
@@ -84,7 +83,7 @@ class AnkleModel:
         :param x_ext: external states
         :return: torque due to movement of the ankle
         """
-        return self.m*self.COM*(x_ext[0]*np.sin(x[1]-x_ext[1]*np.cos(x[1])))
+        return self.m*self.COM*(x_ext[0]*np.sin(np.deg2rad(x[1]))-x_ext[1]*np.cos(np.deg2rad(x[1])))
 
     def T_ela(self, x):
         """
@@ -104,12 +103,10 @@ class AnkleModel:
         u_val = u(t)
         x_ext = [x_ext_1(t),x_ext_2(t),x_ext_3(t),x_ext_4(t)]
 
-        if x[0]>1:
-            x[0] =1
-        B = 1 #viscosity parameter
+        B = 0.82 #viscosity parameter
         x1_dot = (u_val-x[0])*(u_val/self.Tact-(1-u_val)/self.Tdeact)
         x2_dot = x[2]
-        x3_dot = ((1/self.J)*self.F_m(x, x_ext)*self.d) + self.T_grav(x) + self.T_acc(x, x_ext) + self.T_ela(x) + B
+        x3_dot = ((1/self.J)*self.F_m(x, x_ext)*self.d) + self.T_grav(x) + self.T_acc(x, x_ext) + self.T_ela(x) + B*(x_ext[3]-x[2])
 
         return [x1_dot, x2_dot, x3_dot]
 
@@ -314,7 +311,7 @@ def set_x_ext():
 def input(t):
     # return 0.3
     # return np.sin(t) / 2 + 0.5
-    return np.sin(3*t)/3+0.6
+    return 1
 
 def trapezoid_wave(t, width=0.40625, slope=2, amp=1):
     a = slope*width*signal.sawtooth((2*np.pi*(t))/width, width=0)/4.
@@ -325,17 +322,21 @@ def trapezoid_wave(t, width=0.40625, slope=2, amp=1):
         a = -amp/2.
     return a + amp/2.
 def toe_clearance(states,x_ext_2):
-    solve = solve_ivp(differential_eqn,[0,0.406],[0.1,5,5],first_step = 0.01, max_step = 0.01, args=(x_ext_2,))
+    solve = solve_ivp(differential_eqn,[0,0.406],[0,2],first_step = 0.01, max_step = 0.01, args=(x_ext_2,))
     solutions = solve.y.T
     length_foot = 0.26
     alphaF_min = states[:,1]
-    return solutions[:,0] - np.sin(-alphaF_min)*length_foot
+    toe_clearance = solutions[:,0] - np.sin(np.deg2rad((-alphaF_min)))*length_foot
+    for i in range(len(toe_clearance)):
+        if toe_clearance[i]<0:
+            toe_clearance[i] = 0
+    return toe_clearance
 
 def differential_eqn(t,x,x_ext):
+    # [vertical height, vertical velocity]
     x1_dot = x[1]
-    x2_dot = x[2]
-    x3_dot = x_ext(t)
-    return [x1_dot, x2_dot,x3_dot]
+    x2_dot = x_ext(t)
+    return [x1_dot, x2_dot]
 
 
 #0.3m
@@ -343,12 +344,27 @@ def differential_eqn(t,x,x_ext):
 ankle = AnkleModel()
 # sol = solve_ivp(ankle.get_derivative,[0,6],[0.8,8,-4],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,input))
 #sol = solve_ivp(ankle.get_derivative,[0,3],[0.5,-15,0],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
-sol = solve_ivp(ankle.get_derivative,[0,0.406],[0.8,-15,10], first_step = 0.01, max_step = 0.01,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
+sol = solve_ivp(ankle.get_derivative,[0,0.406],[0.8,-15,5], first_step = 0.01, max_step = 0.01,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
+#sol = solve_ivp(ankle.get_derivative,[0,0.406],[0.8,-10,45],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
 times = sol.t
 states = sol.y.T
-toe_clear = toe_clearance(states,x_ext_2)
-plt.plot(times,toe_clear)
+excitation = np.linspace(0, 0.406, len(states[:,0]))
+plt.plot(excitation,states[:,0])
+plt.xlabel('Excitation')
+plt.ylabel('Activation')
 plt.show()
+
+toe_clear = toe_clearance(states,x_ext_2)
+plt.subplot(2, 1, 1)
+plt.plot(times,toe_clear)
+plt.xlabel('Time (s)')
+plt.ylabel('Toe Clearance')
+plt.subplot(2, 1, 2)
+plt.plot(states[:,0],toe_clear)
+plt.xlabel('Activation')
+plt.ylabel('Toe Clearance')
+plt.show()
+
 plt.subplot(3, 1, 1)
 plt.plot(times,states[:,0])
 plt.xlabel('Time (s)')
