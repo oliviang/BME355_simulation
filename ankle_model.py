@@ -55,7 +55,7 @@ class AnkleModel:
        """
         v_ce = self.d*(x_ext[3]-x[2]) # muscle contraction speed
         if v_ce < 0:
-            return (1-v_ce/self.vmax)/(1+v_ce/(self.vmax*self.fv1))
+            return (1-(v_ce/self.vmax))/(1+(v_ce/(self.vmax*self.fv1)))
         else:
             return (1+self.av*(v_ce/self.fv2))/(1+(v_ce/self.fv2))
         
@@ -108,8 +108,7 @@ class AnkleModel:
         B = 0.82 #viscosity parameter
         x1_dot = (u_val-x[0])*(u_val/self.Tact-(1-u_val)/self.Tdeact)
         x2_dot = x[2]
-        x3_dot = 1/self.J*(self.F_m(x,x_ext)*self.d + self.T_grav(x) + self.T_acc(x, x_ext) + self.T_ela(x) + B*(x_ext_4(t)-x[2]))
-        print(x3_dot)
+        x3_dot = (1/self.J)*(self.F_m(x,x_ext)*self.d + self.T_grav(x) + self.T_acc(x, x_ext) + self.T_ela(x) + B*(x_ext[3]-x[2]))
         return [x1_dot, x2_dot, x3_dot]
 
 def set_x_ext():
@@ -535,7 +534,6 @@ def set_x_ext():
     y = 180/np.pi*x_ext_4_new[:, 1]
     f4_new = interp1d(x, y, fill_value="extrapolate")
 
-    # CHANGE THESE VALUES
     x_ext_3 = np.array([
         [2.8359375, -11.587030716723547],
         [2.8515625, -11.416382252559725],
@@ -587,21 +585,24 @@ def set_x_ext():
         [3.2265625, 9.488054607508534],
         [3.2421875, 9.31740614334471]
     ])
-    x = x_ext_3[:, 0] - 2.8359375
-    y = x_ext_3[:, 1]
+    # x = x_ext_3[:, 0] - 2.8359375
+    # y = x_ext_3[:, 1]
     # f3 = interp1d(x, y, fill_value="extrapolate")
     sol = solve_ivp(shank_derivative, [0, 0.40625], [0], first_step=0.01, max_step=0.01, args=(f4,))
     f3 = interp1d(sol.t, sol.y.T[:,0], fill_value="extrapolate")
     plt.figure()
     plt.plot(sol.t, f4(sol.t))
     plt.plot(sol.t, sol.y.T[:, 0])
+    plt.xlabel('Time')
+    plt.legend(('shank angular velocity','shank angle (integral of f4)'))
     plt.show(block=False)
     return f1, f2, f3, f4
     # return f1_new,f2_new,f3_new,f4_new
+
 def input(t):
     # return 0.3
     # return np.sin(t) / 2 + 0.5
-    return np.sin(3*t)/3+0.6
+    return 1
 
 def trapezoid_wave(t, width=0.65, slope=7, amp=1):
     a = slope*width*signal.sawtooth((2*np.pi*(t+0.12))/width, width=0.5)/4.
@@ -621,14 +622,24 @@ def toe_clearance(states,x_ext_2):
     print(solutions[:,0])
     print("ankle to toe")
     print(np.sin(np.deg2rad(-alphaF_min))*length_foot)
-    # plt.figure()
-    # plt.plot(solve.t,x_ext_2(solve.t))
-    # plt.plot(solve.t, solutions[:, 1])
-    # plt.plot(solve.t,solutions[:,0])
-    # plt.show(block=False)
-    return solutions[:,0] - np.sin(np.deg2rad(-alphaF_min))*length_foot
+
+    plt.figure()
+    plt.plot(solve.t,x_ext_2(solve.t))
+    plt.plot(solve.t, solutions[:, 1])
+    plt.plot(solve.t,solutions[:,0])
+    plt.xlabel('Time')
+    plt.legend(('vertical acceleration (x_ext_2)', 'vertical velocity (integral of x_ext_2)','vertical displacement (double int)'))
+    plt.show(block=False)
+
+    toe_clearance = solutions[:,0] - np.sin(np.deg2rad((-alphaF_min)))*length_foot
+    for i in range(len(toe_clearance)):
+        if toe_clearance[i]<0:
+            toe_clearance[i] = 0
+
+    return toe_clearance
 
 def differential_eqn(t,x,x_ext):
+    # [vertical height, vertical velocity]
     x1_dot = x[1]
     x2_dot = x_ext(t)
     return [x1_dot, x2_dot]
@@ -647,12 +658,29 @@ ankle = AnkleModel()
 #sol = solve_ivp(ankle.get_derivative,[0,3],[0.5,-15,0],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
 # sol = solve_ivp(ankle.get_derivative,[0,0.406],[0.8,-15,20], first_step = 0.01, max_step = 0.01,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
 sol = solve_ivp(ankle.get_derivative,[0,0.40625],[0,-30,0], first_step = 0.01, max_step = 0.01,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
+#sol = solve_ivp(ankle.get_derivative,[0,0.406],[0.8,-10,45],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
+
 times = sol.t
 states = sol.y.T
+excitation = np.linspace(0, 0.406, len(states[:,0]))
+plt.figure()
+plt.plot(excitation,states[:,0])
+plt.xlabel('Excitation')
+plt.ylabel('Activation')
+plt.show(block=False)
+
 toe_clear = toe_clearance(states,x_ext_2)
 plt.figure()
+plt.subplot(2, 1, 1)
 plt.plot(times,toe_clear)
+plt.xlabel('Time (s)')
+plt.ylabel('Toe Clearance')
+plt.subplot(2, 1, 2)
+plt.plot(states[:,0],toe_clear)
+plt.xlabel('Activation')
+plt.ylabel('Toe Clearance')
 plt.show(block=False)
+
 plt.figure()
 plt.subplot(3, 1, 1)
 plt.plot(times,states[:,0])
