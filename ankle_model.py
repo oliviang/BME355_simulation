@@ -2,34 +2,105 @@ import collections
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
-from scipy.integrate import solve_ivp,quad
+from scipy.integrate import solve_ivp, quad
 from scipy.interpolate import interp1d
 from scipy import signal
 from scipy.misc import derivative
-#from FESsignal import trapezoid_wave
+from musculoskeletal import HillTypeMuscle, get_velocity
+
+
+# from FESsignal import trapezoid_wave
 
 class AnkleModel:
     """
     TA muscle model adapted from Benoussaad et al. (2013)
     """
+
     def __init__(self):
-        self.Tact = 0.01 #s (Activation constant time)
-        self.Tdeact = 0.04 #s (Relaxation constant time)
-        self.J = 0.0197 # kg.m^2 (Inertia of the foot around ankle)
-        self.d = 0.037 # m (moment arm of TA wrt ankle)
-        self.tendon_length = .223 #m   Model assumes constant tendon length
-        self.resting_length_muscle_tendon = .321 #m
+        self.Tact = 0.01  # s (Activation constant time)
+        self.Tdeact = 0.04  # s (Relaxation constant time)
+        self.J = 0.0197  # kg.m^2 (Inertia of the foot around ankle)
+        self.d = 0.037  # m (moment arm of TA wrt ankle)
+        self.tendon_length = .223
+        #self.tendon_length = .223  # m   Model assumes constant tendon length
+        self.resting_length_muscle_tendon = .321  # m
         self.av = 1.33
         self.fv1 = 0.18
         self.fv2 = 0.023
-        self.vmax = -0.9 #m/s
-        self.Fmax = 600 #N
-        self.W = 0.56 #shape parameter of f_fl
+        self.vmax = -0.9  # m/s
+        self.Fmax = 1000000000  # N
+        self.W = 0.56  # shape parameter of f_fl
         self.a = [2.1, -0.08, -7.97, 0.19, -1.79]
-        #optimal_length_CE is the "optimal length of the fiber at which the maximal force can be generated"
-        self.optimal_length_CE = .075 #m - source: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3130447/
-        self.m = 1.0275 #kg (mass of foot)
-        self.COM = .1145 #m (center of mass location with respect to the ankle)
+        # optimal_length_CE is the "optimal length of the fiber at which the maximal force can be generated"
+        self.optimal_length_CE = .075  # m - source: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3130447/
+        self.m = 1.0275  # kg (mass of foot)
+        self.COM = .1145  # m (center of mass location with respect to the ankle)
+
+    def state_function(self, t, x, activation_func,muscle):
+        return get_velocity(activation_func(t), x, muscle.norm_tendon_length(0.4, x) - x)
+
+    def get_muscle_function(self, x):
+        max_isometric_force = 1000
+        resting_tendon_length = self.resting_length_muscle_tendon
+        resting_muscle_length = .6
+        muscle = HillTypeMuscle(max_isometric_force, resting_muscle_length, resting_tendon_length)
+        L = muscle.resting_length_tendon + muscle.resting_length_muscle
+        ta_length = solve_ivp(self.state_function, [0, 0.01], [1], max_step=0.01, args=(x[0], muscle))
+        # print(ta_length.y.T)
+        ta_force = muscle.get_force(L, ta_length.y.T)
+        return ta_force[1]
+
+    def get_muscle_function_janky(self):
+        activation = [0.,         0.01138488, 0.04919168, 0.11523275, 0.20456327, 0.30825072,
+        0.41694148, 0.52354276, 0.62423115, 0.71802226, 0.80566663, 0.88857939,
+        0.95637668, 0.98393208, 0.99408165, 0.99782007, 0.99919706, 0.99970425,
+        0.99989107, 0.99995988, 0.99998522, 0.99999456, 0.99999799, 0.99999926,
+        0.99999973, 0.9999999,  0.99999996, 0.99999999, 0.99999999, 1.,
+        0.99408309, 0.95713317, 0.90403278, 0.8460662,  0.78734828, 0.72973823,
+        0.67445465, 0.62270478, 0.57604452, 0.53673929, 0.50829626, 0.49842085]
+        times = [0.,      0.01,    0.02,    0.03,    0.04,    0.05,    0.06,    0.07,    0.08,
+        0.09,    0.1,     0.11,    0.12,    0.13,    0.14,    0.15,    0.16,    0.17,
+        0.18,    0.19,    0.2,     0.21,    0.22,    0.23,    0.24,    0.25,    0.26,
+        0.27,    0.28,    0.29,    0.3,     0.31,    0.32,    0.33,    0.34,    0.35,
+        0.36,    0.37,    0.38,    0.39,    0.4,     0.40625]
+
+        times2 = [
+            0., 0.01, 0.01575507, 0.02135926, 0.02686503, 0.03686503,
+            0.04686503, 0.05686503, 0.06686503, 0.07686503, 0.08686503, 0.09686503,
+            0.10686503, 0.11686503, 0.12686503, 0.13686503, 0.14686503, 0.15686503,
+            0.16686503, 0.17686503, 0.18686503, 0.19686503, 0.20686503, 0.21686503,
+            0.22686503, 0.23686503, 0.24686503, 0.25686503, 0.26686503, 0.27686503,
+            0.28686503, 0.29686503, 0.30326988, 0.30958056, 0.31712387, 0.32712387,
+            0.33712387, 0.34712387, 0.35712387, 0.36548359, 0.37376686, 0.3819861,
+            0.39067448, 0.39936285, 0.40625]
+        activation2 = [0., 0., 0.01128956, 0.25518368, 0.50169515, 0.73388424,
+                 0.83072029, 0.87110642, 0.88794974, 0.89497435, 0.89790402, 0.89912586,
+                 0.89963543, 0.89984795, 0.89993659, 0.89997355, 0.89998897, 0.8999954,
+                 0.89999808, 0.8999992, 0.89999967, 0.89999986, 0.89999994, 0.89999998,
+                 0.89999999, 0.9, 0.9, 0.9, 0.9, 0.9,
+                 0.9, 0.9, 0.9, 0.9, 0.9, 0.9,
+                 0.9, 0.9, 0.9, 0.9, 0.9, 0.9,
+                 0.84580168, 0.91674455, 0.9901729]
+
+
+
+
+
+        activation_func = interp1d( times,activation, fill_value="extrapolate")
+        activation_func2 = interp1d(times2,activation2, fill_value="extrapolate")
+        max_isometric_force = 600
+        resting_tendon_length = self.tendon_length
+        resting_muscle_length = self.resting_length_muscle_tendon-self.tendon_length
+        muscle = HillTypeMuscle(max_isometric_force, resting_muscle_length, resting_tendon_length)
+        L = muscle.resting_length_tendon + muscle.resting_length_muscle
+        ta_length = solve_ivp(self.state_function, [0, 0.4065], [1], max_step=0.01, args=(activation_func,muscle))
+        ta_length2 = solve_ivp(self.state_function, [0, 0.4065], [1], max_step=0.01, args=(zero_input, muscle))
+        # # print(ta_length.y.T)
+        # print(len(ta_length.t))
+        # print(len(ta_length.y.T))
+        ta_force_function_1 = interp1d(ta_length.t,muscle.get_force(L, ta_length.y.T),fill_value="extrapolate")
+        ta_force_function_2 = interp1d(ta_length2.t,muscle.get_force(L, ta_length2.y.T),fill_value="extrapolate")
+        return ta_force_function_1, ta_force_function_2
 
     def F_m(self, x, x_ext):
         """
@@ -37,7 +108,13 @@ class AnkleModel:
         :param x_ext: external states
         :return: TA muscular force induced by electrical stimulation (Fm)
         """
-        return x[0]*self.Fmax*self.f_fl(x, x_ext)*self.f_fv(x, x_ext)
+        max_isometric_force = 1000
+        resting_tendon_length = self.resting_length_muscle_tendon
+        resting_muscle_length = .6
+        muscle = HillTypeMuscle(max_isometric_force, resting_muscle_length, resting_tendon_length)
+        # muscle = HillTypeModel(max_isometric_force, resting_muscle_length, resting_tendon_length)
+        # return 1000*(muscle.force_length_contractile(1)*x[0] + muscle.force_length_parallel(0.5) + muscle.force_length_series(1.5))
+        L = muscle.resting_length_tendon + muscle.resting_length_muscle
 
     def f_fl(self, x, x_ext):
         """
@@ -45,29 +122,28 @@ class AnkleModel:
        :param x_ext: external states
        :return: force (f_fl) due to TA muscle length
        """
-        return np.exp(-pow((self.CE_length(x, x_ext)-self.optimal_length_CE)/(self.W*self.optimal_length_CE), 2))
+        return np.exp(-pow((self.CE_length(x, x_ext) - self.optimal_length_CE) / (self.W * self.optimal_length_CE), 2))
 
-        
     def f_fv(self, x, x_ext):
         """
        :param x: state vector
        :param x_ext: external states
        :return: force (f_fv) due to muscle contraction speed
        """
-        v_ce = self.d*(x_ext[3]-x[2]) # muscle contraction speed
+        v_ce = self.d * (x_ext[3] - x[2])  # muscle contraction speed
         if v_ce < 0:
-            return (1-(v_ce/self.vmax))/(1+(v_ce/(self.vmax*self.fv1)))
+            return (1 - (v_ce / self.vmax)) / (1 + (v_ce / (self.vmax * self.fv1)))
         else:
-            return (1+self.av*(v_ce/self.fv2))/(1+(v_ce/self.fv2))
-        
+            return (1 + self.av * (v_ce / self.fv2)) / (1 + (v_ce / self.fv2))
+
     def CE_length(self, x, x_ext):
         """
         :param x: state vector
         :param x_ext: external states
         :return: length of contractile element
         """
-        #model assumes constant tendon length
-        lmt = self.resting_length_muscle_tendon + self.d*(x_ext[2]-x[1])
+        # model assumes constant tendon length
+        lmt = self.resting_length_muscle_tendon + self.d * (x_ext[2] - x[1])
         return lmt - self.tendon_length
 
     def T_grav(self, x):
@@ -75,8 +151,8 @@ class AnkleModel:
         :param x: state vector
         :return: torque of the foot around the ankle due to gravity
         """
-        g = -9.81 #gravity acceleration
-        return self.m*self.COM*np.cos(np.deg2rad(x[1]))*g
+        g = -9.81  # gravity acceleration
+        return self.m * self.COM * np.cos(np.deg2rad(x[1])) * g
 
     def T_acc(self, x, x_ext):
         """
@@ -84,16 +160,16 @@ class AnkleModel:
         :param x_ext: external states
         :return: torque due to movement of the ankle
         """
-        return self.m*self.COM*(x_ext[0]*np.sin(np.deg2rad(x[1]))-x_ext[1]*np.cos(np.deg2rad(x[1])))
+        return self.m * self.COM * (x_ext[0] * np.sin(np.deg2rad(x[1])) - x_ext[1] * np.cos(np.deg2rad(x[1])))
 
-    def T_ela(self, x):
+    def T_ela(self, x,knee_angle):
         """
         :param x: state vector
         :return: passive elastic torque of the foot around the ankle due to passive muscles and tissues
         """
-        return np.exp(self.a[0]+self.a[1]*x[1])-np.exp(self.a[2]+self.a[3]*x[1])+self.a[4]
+        return np.exp(self.a[0] + self.a[1] * x[1]-0.0176*knee_angle) - np.exp(self.a[2] + self.a[3] * x[1]+0.0008*knee_angle) + self.a[4]
 
-    def get_derivative(self, t, x, x_ext_1,x_ext_2,x_ext_3,x_ext_4, u):
+    def get_derivative(self, t, x, x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, u,ta_forces):
         """
         :param t: time
         :param u: normalized muscle excitation (0 <= E <=1 )
@@ -101,20 +177,29 @@ class AnkleModel:
         :param x_ext: external states
         :return: time derivatives of state variables
         """
-        x_ext_2_double_derivative = derivative(x_ext_2,t,n = 2)
+        x_ext_2_double_derivative = derivative(x_ext_2, t, n=2)
         u_val = u(t)
+        knee_angle = knee_angle(t)
         x_ext = [x_ext_1(t), x_ext_2_double_derivative, x_ext_3(t), x_ext_4(t)]
-        #x_ext = [x_ext_1(t),x_ext_2(t),x_ext_3(t),x_ext_4(t)]
-        #
-        if x[0]<0:
-            x[0] =0
-        if x[0]>1:
+        # x_ext = [x_ext_1(t),x_ext_2(t),x_ext_3(t),x_ext_4(t)]
+        # print(str(x[0]) + ":" + str(self.Fmax) + ":" + str(self.f_fl(x, x_ext)) + ":" + str(self.f_fv(x, x_ext)))
+        if x[0] < 0:
+            x[0] = 0
+        if x[0] > 1:
             x[0] = 1
-        B = 0.82 #viscosity parameter
-        x1_dot = (u_val-x[0])*(u_val/self.Tact-(1-u_val)/self.Tdeact)
+        B = 0.82  # viscosity parameter
+        x1_dot = (u_val - x[0]) * (u_val / self.Tact - (1 - u_val) / self.Tdeact)
         x2_dot = x[2]
-        x3_dot = (1/self.J)*(self.F_m(x,x_ext)*self.d + self.T_grav(x) + self.T_acc(x, x_ext) + self.T_ela(x) + B*(x_ext[3]-x[2]))
+        # x3_dot = (1/self.J)*(self.F_m(x,x_ext)*self.d + self.T_grav(x) + self.T_acc(x, x_ext)+ self.T_ela(x)+B*(x_ext[3]-x[2]))
+
+        x3_dot = (1 / self.J) * (
+                    ta_forces(t) * self.d + self.T_grav(x) + self.T_acc(x, x_ext) + self.T_ela(x,knee_angle) + B * (
+                        x_ext[3] - x[2]))
+        # get rid of t_ela
+        #print(str(ta_forces(t)*self.d)+":"+str(self.T_grav(x))+":"+str(self.T_acc(x, x_ext))+":"+str(self.T_ela(x)) +":"+str(B*(x_ext[3]-x[2]) ))
+        print("ankle angle: "+str(x[1])+" T_elas:"+str(self.T_ela(x,knee_angle))+" Fm:"+str(ta_forces(t)*self.d)+" B:"+str(B*(x_ext[3]-x[2])))
         return [x1_dot, x2_dot, x3_dot]
+
 
 def set_x_ext():
     """
@@ -176,7 +261,7 @@ def set_x_ext():
         [100.16876227077154, 0.8464430427336149]
     ])
     x = 0.40625 * ((x_ext_1[:, 0] - 55.966414637202874) / (100 - 55.966414637202874))
-    y = 9.81*x_ext_1[:, 1]
+    y = 9.81 * x_ext_1[:, 1]
     f1 = interp1d(x, y, fill_value="extrapolate")
 
     x_ext_2_new = np.array([
@@ -253,8 +338,8 @@ def set_x_ext():
         [8.359124558273965, -11.161910254444168],
         [8.361255296764256, -11.554236706624785]
     ])
-    x=x_ext_2_new[:,0] - 7.893473645030628
-    y = -x_ext_2_new[:,1]
+    x = x_ext_2_new[:, 0] - 7.893473645030628
+    y = -x_ext_2_new[:, 1]
     f2_new = interp1d(x, y, fill_value="extrapolate")
 
     x_ext_2_diff = np.array([
@@ -416,8 +501,8 @@ def set_x_ext():
         [98.20781604753394, -0.9921259842519683],
         [98.76865851891212, -1.0157480314960627]
     ])
-    x = 0.40625 * ((x_ext_2[:, 0]-56.18810685474131) / (100-56.18810685474131))
-    y = -9.81*x_ext_2[:, 1]
+    x = 0.40625 * ((x_ext_2[:, 0] - 56.18810685474131) / (100 - 56.18810685474131))
+    y = -9.81 * x_ext_2[:, 1]
     f2 = interp1d(x, y, fill_value="extrapolate")
 
     x_ext_1_new = np.array([
@@ -534,7 +619,7 @@ def set_x_ext():
         [8.350547665653242, 5.2688351172378916],
         [8.356565740702179, 5.780267377451956]
     ])
-    x = x_ext_1_new[:,0] - 7.92172337678564
+    x = x_ext_1_new[:, 0] - 7.92172337678564
     y = -x_ext_1_new[:, 1]
     f1_new = interp1d(x, y, fill_value="extrapolate")
 
@@ -573,7 +658,7 @@ def set_x_ext():
         [97.21142109851787, 2.64603312990414],
         [98.66434176111596, -3.818657367044409]
     ])
-    x = 0.40625 * ((x_ext_4[:, 0]-56.57541412380124) / (100-56.57541412380124))
+    x = 0.40625 * ((x_ext_4[:, 0] - 56.57541412380124) / (100 - 56.57541412380124))
     y = x_ext_4[:, 1]
     f4 = interp1d(x, y, fill_value="extrapolate")
 
@@ -632,71 +717,71 @@ def set_x_ext():
         [8.34020618556701, -0.030068728522335775]
     ])
     x = x_ext_4_new[:, 0] - 7.907216494845361
-    y = 180/np.pi*x_ext_4_new[:, 1]
+    y = 180 / np.pi * x_ext_4_new[:, 1]
     f4_new = interp1d(x, y, fill_value="extrapolate")
 
-    x_ext_3 = np.array([
-        [2.8359375, -11.587030716723547],
-        [2.8515625, -11.416382252559725],
-        [2.8671875, -11.16040955631399],
-        [2.875, -10.989761092150168],
-        [2.8828125, -10.392491467576786],
-        [2.890625, -10.051194539249146],
-        [2.8984375, -9.624573378839589],
-        [2.90625, -9.197952218430032],
-        [2.9140625, -8.941979522184297],
-        [2.921875, -8.51535836177474],
-        [2.9296875, -8.088737201365184],
-        [2.9375, -7.406143344709896],
-        [2.9453125, -6.723549488054605],
-        [2.953125, -5.69965870307167],
-        [2.9609374999999996, -5.187713310580204],
-        [2.953125, -5.443686006825935],
-        [2.9687500000000004, -4.846416382252556],
-        [2.9687500000000004, -4.590443686006825],
-        [2.9687500000000004, -4.249146757679181],
-        [2.9765625, -3.993174061433443],
-        [2.9921875, -2.9692832764505113],
-        [3, -2.030716723549485],
-        [3.0078125, -1.4334470989761066],
-        [3.015625, -0.7508532423208152],
-        [3.0234375, 0.017064846416385393],
-        [3.03125, 0.784982935153586],
-        [3.0390625, 1.4675767918088756],
-        [3.046875, 2.150170648464165],
-        [3.0546875, 3.0034129692832767],
-        [3.0625, 3.515358361774746],
-        [3.0546875, 3.3447098976109224],
-        [3.0625, 3.771331058020479],
-        [3.0703125, 4.539249146757681],
-        [3.0781249999999996, 5.221843003412971],
-        [3.0859375000000004, 5.477815699658704],
-        [3.09375, 6.245733788395906],
-        [3.1015625, 6.501706484641639],
-        [3.109375, 7.184300341296931],
-        [3.1171875, 7.440273037542664],
-        [3.125, 8.122866894197955],
-        [3.1328125, 8.378839590443686],
-        [3.1484375, 8.976109215017065],
-        [3.15625, 9.31740614334471],
-        [3.1640625, 9.573378839590445],
-        [3.1796875, 9.744027303754267],
-        [3.1953125, 9.829351535836178],
-        [3.2109375000000004, 9.658703071672356],
-        [3.2265625, 9.488054607508534],
-        [3.2421875, 9.31740614334471]
-    ])
+    # x_ext_3 = np.array([
+    #     [2.8359375, -11.587030716723547],
+    #     [2.8515625, -11.416382252559725],
+    #     [2.8671875, -11.16040955631399],
+    #     [2.875, -10.989761092150168],
+    #     [2.8828125, -10.392491467576786],
+    #     [2.890625, -10.051194539249146],
+    #     [2.8984375, -9.624573378839589],
+    #     [2.90625, -9.197952218430032],
+    #     [2.9140625, -8.941979522184297],
+    #     [2.921875, -8.51535836177474],
+    #     [2.9296875, -8.088737201365184],
+    #     [2.9375, -7.406143344709896],
+    #     [2.9453125, -6.723549488054605],
+    #     [2.953125, -5.69965870307167],
+    #     [2.9609374999999996, -5.187713310580204],
+    #     [2.953125, -5.443686006825935],
+    #     [2.9687500000000004, -4.846416382252556],
+    #     [2.9687500000000004, -4.590443686006825],
+    #     [2.9687500000000004, -4.249146757679181],
+    #     [2.9765625, -3.993174061433443],
+    #     [2.9921875, -2.9692832764505113],
+    #     [3, -2.030716723549485],
+    #     [3.0078125, -1.4334470989761066],
+    #     [3.015625, -0.7508532423208152],
+    #     [3.0234375, 0.017064846416385393],
+    #     [3.03125, 0.784982935153586],
+    #     [3.0390625, 1.4675767918088756],
+    #     [3.046875, 2.150170648464165],
+    #     [3.0546875, 3.0034129692832767],
+    #     [3.0625, 3.515358361774746],
+    #     [3.0546875, 3.3447098976109224],
+    #     [3.0625, 3.771331058020479],
+    #     [3.0703125, 4.539249146757681],
+    #     [3.0781249999999996, 5.221843003412971],
+    #     [3.0859375000000004, 5.477815699658704],
+    #     [3.09375, 6.245733788395906],
+    #     [3.1015625, 6.501706484641639],
+    #     [3.109375, 7.184300341296931],
+    #     [3.1171875, 7.440273037542664],
+    #     [3.125, 8.122866894197955],
+    #     [3.1328125, 8.378839590443686],
+    #     [3.1484375, 8.976109215017065],
+    #     [3.15625, 9.31740614334471],
+    #     [3.1640625, 9.573378839590445],
+    #     [3.1796875, 9.744027303754267],
+    #     [3.1953125, 9.829351535836178],
+    #     [3.2109375000000004, 9.658703071672356],
+    #     [3.2265625, 9.488054607508534],
+    #     [3.2421875, 9.31740614334471]
+    # ])
     # x = x_ext_3[:, 0] - 2.8359375
     # y = x_ext_3[:, 1]
     # f3 = interp1d(x, y, fill_value="extrapolate")
     sol = solve_ivp(shank_derivative, [0, 0.40625], [0], first_step=0.01, max_step=0.01, args=(f4,))
     f3 = interp1d(sol.t, sol.y.T[:,0], fill_value="extrapolate")
-    plt.figure()
-    plt.plot(sol.t, f4(sol.t))
-    plt.plot(sol.t, sol.y.T[:, 0])
-    plt.xlabel('Time')
-    plt.legend(('shank angular velocity','shank angle (integral of f4)'))
-    plt.show(block=False)
+    # plt.figure()
+    # plt.plot(sol.t, f4(sol.t))
+    # plt.plot(sol.t, sol.y.T[:, 0])
+    # plt.xlabel('Time')
+    # plt.legend(('shank angular velocity','shank angle (integral of f4)'))
+    # plt.show(block=False)
 
     ank_height = np.array([
         [0, 0.181012784459203],
@@ -740,26 +825,121 @@ def set_x_ext():
     x = 0.40625 * ((ank_height[:, 0]) / (0.359930393506053))
     y = ank_height[:, 1]
     f_new2 = interp1d(x, y, fill_value="extrapolate")
-    return f1, f_new2, f3, f4
+
+    knee_angle = np.array([
+        [60.2083333333333, 18.0842911877394],
+        [60.8333333333333, 18.0842911877394],
+        [61.4583333333333, 18.3908045977011],
+        [62.5, 19.9233716475095],
+        [63.3333333333333, 21.1494252873563],
+        [63.3333333333333, 22.375478927203],
+        [63.75, 23.6015325670498],
+        [64.1666666666666, 24.5210727969348],
+        [65, 26.0536398467432],
+        [65.2083333333333, 26.6666666666666],
+        [65.4166666666666, 27.8927203065134],
+        [66.25, 29.4252873563218],
+        [66.6666666666666, 30.9578544061302],
+        [66.6666666666666, 32.7969348659003],
+        [67.5, 34.3295019157088],
+        [67.5, 35.8620689655172],
+        [67.9166666666666, 36.4750957854406],
+        [68.125, 37.7011494252873],
+        [68.5416666666666, 38.9272030651341],
+        [69.1666666666666, 40.4597701149425],
+        [69.375, 41.6858237547892],
+        [69.5833333333333, 42.911877394636],
+        [69.7916666666666, 44.7509578544061],
+        [70, 45.0574712643678],
+        [70.4166666666666, 46.5900383141762],
+        [70.625, 47.5095785440613],
+        [70.8333333333333, 48.1226053639846],
+        [70.8333333333333, 49.0421455938697],
+        [70.8333333333333, 49.9616858237548],
+        [71.4583333333333, 50.8812260536398],
+        [71.4583333333333, 51.8007662835249],
+        [71.6666666666666, 53.0268199233716],
+        [72.5, 54.2528735632183],
+        [72.7083333333333, 56.3984674329502],
+        [73.3333333333333, 57.6245210727969],
+        [74.1666666666666, 59.463601532567],
+        [74.1666666666666, 60.3831417624521],
+        [74.375, 60.9961685823754],
+        [74.5833333333333, 61.9157088122605],
+        [74.5833333333333, 62.5287356321839],
+        [75.4166666666666, 63.7547892720306],
+        [75.625, 64.9808429118774],
+        [76.25, 65.9003831417624],
+        [76.6666666666666, 66.8199233716475],
+        [77.0833333333333, 67.7394636015325],
+        [77.2916666666666, 68.3524904214559],
+        [77.9166666666666, 68.6590038314176],
+        [78.5416666666666, 68.9655172413793],
+        [79.375, 69.272030651341],
+        [79.7916666666666, 69.272030651341],
+        [80.625, 69.272030651341],
+        [81.0416666666666, 68.9655172413793],
+        [81.875, 68.3524904214559],
+        [82.5, 67.7394636015325],
+        [82.9166666666666, 67.1264367816092],
+        [83.3333333333333, 64.9808429118774],
+        [83.9583333333333, 63.7547892720306],
+        [84.5833333333333, 61.3026819923371],
+        [85.2083333333333, 59.7701149425287],
+        [85.625, 57.6245210727969],
+        [86.875, 55.1724137931034],
+        [87.0833333333333, 53.3333333333333],
+        [87.2916666666666, 50.5747126436781],
+        [87.9166666666666, 48.4291187739463],
+        [88.3333333333333, 46.8965517241379],
+        [88.5416666666666, 46.2835249042145],
+        [88.75, 45.3639846743295],
+        [89.1666666666666, 43.5249042145593],
+        [89.375, 41.6858237547892],
+        [89.5833333333333, 39.5402298850574],
+        [90, 38.6206896551724],
+        [90.625, 36.4750957854406],
+        [90.8333333333333, 35.8620689655172],
+        [91.25, 35.2490421455938],
+        [91.6666666666666, 32.7969348659003],
+        [91.875, 31.8773946360153],
+        [92.2916666666666, 29.7318007662835],
+        [92.7083333333333, 27.8927203065134],
+        [93.125, 26.0536398467432],
+        [93.125, 23.9080459770114],
+        [93.75, 22.375478927203],
+        [94.7916666666666, 20.5363984674329],
+        [95.2083333333333, 19.3103448275862],
+        [96.0416666666666, 17.1647509578544],
+        [97.0833333333333, 16.2452107279693],
+        [98.3333333333333, 15.0191570881225]
+    ])
+    x = 0.40625 * ((knee_angle[:, 0] - 60.2083333333333) / (98.3333333333333 - 60.2083333333333))
+    y = knee_angle[:, 1]
+    knee_angles = interp1d(x, y, fill_value="extrapolate")
+    return f1, f_new2, f3, f4, knee_angles
     # return f1_new,f2_new,f3_new,f4_new
 
 def input(t):
     return t / .40625
 
-def trapezoid_wave(t, width=0.65, slope=100, amp=1):
-    a = slope*width*signal.sawtooth((2*np.pi*(t+0.12))/width, width=0.5)/4.
-    #a = slope * width * signal.sawtooth((2 * np.pi * (t + 0.18)) / width, width=0.5) / 4.
-    if a>amp/2.:
-        a = amp/2.
-    elif a<-amp/2.:
-        a = -amp/2.
-    return a + amp/2.
-def toe_clearance(states,x_ext_2,times):
+
+def trapezoid_wave(t, width=0.65, slope=7, amp=1):
+    a = slope * width * signal.sawtooth((2 * np.pi * (t + 0.12)) / width, width=0.5) / 4.
+    # a = slope * width * signal.sawtooth((2 * np.pi * (t + 0.18)) / width, width=0.5) / 4.
+    if a > amp / 2.:
+        a = amp / 2.
+    elif a < -amp / 2.:
+        a = -amp / 2.
+    return a + amp / 2.
+
+
+def toe_clearance(states, x_ext_2, times):
     alphaF_min = states[:, 1]
     # f_new2 = interp1d(times, states[:, 1], fill_value="extrapolate")
     # solve = solve_ivp(differential_eqn,[0,.40625],[0.17,-0.5],method="RK45",first_step = 0.01, max_step = 0.01, args=(x_ext_2,f_new2))
     # solutions = solve.y.T
-    #print(f"length of toe clear sol: {len(solutions)}")
+    # print(f"length of toe clear sol: {len(solutions)}")
     length_foot = 0.26
     # print(f"length of alpha min: {len(-alphaF_min)}")
     # print(solutions[:,0])
@@ -805,28 +985,29 @@ def toe_clearance(states,x_ext_2,times):
         [0.349198228923592, 0.00516829879601374],
         [0.359930393506053, 0]
     ])
-    x = 0.40625 * ((ank_height[:, 0]) /(0.359930393506053))
+    x = 0.40625 * ((ank_height[:, 0]) / (0.359930393506053))
     y = ank_height[:, 1]
     f_new2 = interp1d(x, y, fill_value="extrapolate")
     ankle_height = []
     for i in range(len(times)):
         ankle_height.append(f_new2(times[i]))
-    #plt.plot(solve.t, solutions[:, 1])
-    #plt.plot(solve.t,solutions[:,0])
-   # plt.xlabel('Time')
-    #plt.legend(('vertical acceleration (x_ext_2)', 'vertical velocity (integral of x_ext_2)','vertical displacement (double int)'))
-    #plt.show(block=False)
+    # plt.plot(solve.t, solutions[:, 1])
+    # plt.plot(solve.t,solutions[:,0])
+    # plt.xlabel('Time')
+    # plt.legend(('vertical acceleration (x_ext_2)', 'vertical velocity (integral of x_ext_2)','vertical displacement (double int)'))
+    # plt.show(block=False)
     #
-   # toe_clearance = (solutions[:,0]-np.sin(np.deg2rad((alphaF_min)))*length_foot)
-    toe_clearance = (ankle_height- np.sin(np.deg2rad((-alphaF_min))) * length_foot)
+    # toe_clearance = (solutions[:,0]-np.sin(np.deg2rad((alphaF_min)))*length_foot)
+    toe_clearance = (ankle_height - np.sin(np.deg2rad((-alphaF_min))) * length_foot)
     # for i in range(len(toe_clearance)):
     #     if toe_clearance[i]<0:
     #         toe_clearance[i] = 0
     return toe_clearance
 
-def differential_eqn(t,x,x_ext,f_angle):
+
+def differential_eqn(t, x, x_ext, f_angle):
     # [vertical height, vertical velocity]
-    #angle_val = f_angle(t)
+    # angle_val = f_angle(t)
     # if angle_val>-5:
     #     x[0] = x[0]*0.8-x[0]*0.03
     x1_dot = x[1]
@@ -834,58 +1015,80 @@ def differential_eqn(t,x,x_ext,f_angle):
     return [x1_dot, x2_dot]
 
 
-
-
-def shank_derivative(t,x,x_ext_4):
+def shank_derivative(t, x, x_ext_4):
     x1_dot = x_ext_4(t)
     return x1_dot
 
-def zero_input(t):
-    return 0.5
 
-#0.3m
-(x_ext_1,x_ext_2,x_ext_3,x_ext_4) = set_x_ext()
+def zero_input(t):
+    return 0
+
+def rect_wave(t, width = 0.745, slope = 100, amp = .8):   #rectangular
+    a = slope * width * signal.sawtooth((2 * np.pi * (t + 0.17)) / width, width=0.5) / 4.    #rect
+    if a>amp/2.:
+        a = amp/2.
+    elif a<-amp/2.:
+        a = -amp/2.
+    return a + amp/2 + 0.1
+
+# 0.3m
+(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle) = set_x_ext()
 ankle = AnkleModel()
+(ta_forces,ta_forces2) = ankle.get_muscle_function_janky()
 # sol = solve_ivp(ankle.get_derivative,[0,6],[0.8,8,-4],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,input))
-#sol = solve_ivp(ankle.get_derivative,[0,3],[0.5,-15,0],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
+# sol = solve_ivp(ankle.get_derivative,[0,3],[0.5,-15,0],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
 # sol = solve_ivp(ankle.get_derivative,[0,0.406],[0.8,-15,20], first_step = 0.01, max_step = 0.01,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
-#sol = solve_ivp(ankle.get_derivative,[0,0.40625],[0,-44,0], first_step = 0.01, max_step = 0.01,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
-#sol = solve_ivp(ankle.get_derivative,[0,0.406],[0.8,-10,45],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
-sol = solve_ivp(ankle.get_derivative,[0,0.40625],[0,-44,0], first_step = 0.01, max_step = 0.01,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
+# sol = solve_ivp(ankle.get_derivative,[0,0.40625],[0,-44,0], first_step = 0.01, max_step = 0.01,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
+# sol = solve_ivp(ankle.get_derivative,[0,0.406],[0.8,-10,45],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
+sol = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,0], first_step=0.01, max_step=0.01,
+                args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, zero_input,ta_forces2))
+sol2 = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,0], first_step=0.01, max_step=0.01,
+                 args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, trapezoid_wave,ta_forces))
 times = sol.t
 states = sol.y.T
+times2 = sol2.t
+states2 = sol2.y.T
+print(times)
+print(states[:,0])
 # excitation = np.linspace(0, 0.406, len(states[:,0]))
 excitation = [trapezoid_wave(t) for t in times]
 plt.figure()
-plt.plot(excitation,states[:,0])
+plt.plot(excitation, states[:, 0])
 plt.xlabel('Excitation')
 plt.ylabel('Activation')
 plt.show(block=False)
 
-toe_clear = toe_clearance(states,x_ext_2,times)
+toe_clear = toe_clearance(states, x_ext_2, times)
+toe_clear2 = toe_clearance(states2, x_ext_2, times2)
 plt.figure()
 plt.subplot(2, 1, 1)
-plt.plot(times,toe_clear)
+plt.plot(times, toe_clear, label='input')
+plt.plot(times2, toe_clear2, label='trap')
 plt.xlabel('Time (s)')
 plt.ylabel('Toe Clearance')
 plt.subplot(2, 1, 2)
-plt.plot(states[:,0],toe_clear)
+plt.plot(states[:, 0], toe_clear)
 plt.xlabel('Activation')
 plt.ylabel('Toe Clearance')
 plt.show(block=False)
 
 plt.figure()
 plt.subplot(3, 1, 1)
-plt.plot(times,states[:,0])
+plt.plot(times, states[:, 0], label='input')
+plt.plot(times2, states2[:, 0], label='trap')
 plt.xlabel('Time (s)')
 plt.ylabel('Activation')
 plt.subplot(3, 1, 2)
-plt.plot(times,states[:,1])
+plt.plot(times, states[:, 1], label='input')
+plt.plot(times2, states2[:, 1], label='trap')
 plt.xlabel('Time (s)')
 plt.ylabel('Angle')
+plt.legend()
 plt.subplot(3, 1, 3)
-plt.plot(times,states[:,2])
+plt.plot(times, states[:, 2], label='input')
+plt.plot(times2, states2[:, 2], label='trap')
 plt.xlabel('Time (s)')
 plt.ylabel('Rotational velocity')
+plt.legend()
 plt.show(block=False)
 plt.show()
