@@ -37,18 +37,8 @@ class AnkleModel:
         self.COM = .1145  # m (center of mass location with respect to the ankle)
 
     def state_function(self, t, x, activation_func,muscle):
-        return get_velocity(activation_func(t), x, muscle.norm_tendon_length(0.4, x) - x)
+        return get_velocity(activation_func(t), x, muscle.norm_tendon_length(.321, x) )
 
-    def get_muscle_function(self, x):
-        max_isometric_force = 1000
-        resting_tendon_length = self.resting_length_muscle_tendon
-        resting_muscle_length = .6
-        muscle = HillTypeMuscle(max_isometric_force, resting_muscle_length, resting_tendon_length)
-        L = muscle.resting_length_tendon + muscle.resting_length_muscle
-        ta_length = solve_ivp(self.state_function, [0, 0.01], [1], max_step=0.01, args=(x[0], muscle))
-        # print(ta_length.y.T)
-        ta_force = muscle.get_force(L, ta_length.y.T)
-        return ta_force[1]
 
     def get_muscle_function_janky(self):
         activation = [0.,         0.01138488, 0.04919168, 0.11523275, 0.20456327, 0.30825072,
@@ -82,25 +72,32 @@ class AnkleModel:
                  0.9, 0.9, 0.9, 0.9, 0.9, 0.9,
                  0.84580168, 0.91674455, 0.9901729]
 
-
-
-
+        activation3 = [0.,         0.08116793, 0.16147538, 0.23787077, 0.30844015, 0.37234825,
+        0.42962879, 0.48090589, 0.52711847, 0.56929527, 0.60840146, 0.64525526,
+        0.68050017, 0.71461344, 0.74793308, 0.78069046, 0.81304051, 0.84508618,
+        0.87689632, 0.90851802, 0.93998455, 0.96440515, 0.95879931, 0.93882455,
+        0.91358895, 0.88640511, 0.8585244,  0.83044201, 0.80236776, 0.77440171,
+        0.74660198, 0.71901221, 0.6916734,  0.66462989, 0.63793308, 0.61164459,
+        0.58583968, 0.5606115,  0.53607653, 0.51238198, 0.48971582, 0.4761767 ]
 
         activation_func = interp1d( times,activation, fill_value="extrapolate")
         activation_func2 = interp1d(times2,activation2, fill_value="extrapolate")
-        max_isometric_force = 600
+        activation_func3 = interp1d(times, activation3, fill_value="extrapolate")
+        max_isometric_force = 2500
         resting_tendon_length = self.tendon_length
         resting_muscle_length = self.resting_length_muscle_tendon-self.tendon_length
         muscle = HillTypeMuscle(max_isometric_force, resting_muscle_length, resting_tendon_length)
         L = muscle.resting_length_tendon + muscle.resting_length_muscle
         ta_length = solve_ivp(self.state_function, [0, 0.4065], [1], max_step=0.01, args=(activation_func,muscle))
         ta_length2 = solve_ivp(self.state_function, [0, 0.4065], [1], max_step=0.01, args=(zero_input, muscle))
+        ta_length3 = solve_ivp(self.state_function, [0, 0.4065], [1], max_step=0.01, args=(activation_func3, muscle))
         # # print(ta_length.y.T)
         # print(len(ta_length.t))
         # print(len(ta_length.y.T))
         ta_force_function_1 = interp1d(ta_length.t,muscle.get_force(L, ta_length.y.T),fill_value="extrapolate")
         ta_force_function_2 = interp1d(ta_length2.t,muscle.get_force(L, ta_length2.y.T),fill_value="extrapolate")
-        return ta_force_function_1, ta_force_function_2
+        ta_force_function_3 = interp1d(ta_length3.t, muscle.get_force(L, ta_length3.y.T), fill_value="extrapolate")
+        return ta_force_function_1, ta_force_function_2, ta_force_function_3
 
     def F_m(self, x, x_ext):
         """
@@ -108,7 +105,7 @@ class AnkleModel:
         :param x_ext: external states
         :return: TA muscular force induced by electrical stimulation (Fm)
         """
-        max_isometric_force = 1000
+        max_isometric_force = 2000
         resting_tendon_length = self.resting_length_muscle_tendon
         resting_muscle_length = .6
         muscle = HillTypeMuscle(max_isometric_force, resting_muscle_length, resting_tendon_length)
@@ -167,6 +164,8 @@ class AnkleModel:
         :param x: state vector
         :return: passive elastic torque of the foot around the ankle due to passive muscles and tissues
         """
+        #return np.exp(self.a[0] + self.a[1] * x[1] ) - np.exp(
+            #self.a[2] + self.a[3] * x[1]) + self.a[4]
         return np.exp(self.a[0] + self.a[1] * x[1]-0.0176*knee_angle) - np.exp(self.a[2] + self.a[3] * x[1]+0.0008*knee_angle) + self.a[4]
 
     def get_derivative(self, t, x, x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, u,ta_forces):
@@ -933,6 +932,14 @@ def trapezoid_wave(t, width=0.65, slope=7, amp=1):
         a = -amp / 2.
     return a + amp / 2.
 
+def triangle_wave(t,width =0.65,slope = 3, amp = 1):
+    a = slope * width * signal.sawtooth((2 * np.pi * (t + 0.12)) / width, width=0.5) / 4.
+    # a = slope * width * signal.sawtooth((2 * np.pi * (t + 0.18)) / width, width=0.5) / 4.
+    if a > amp / 2.:
+        a = amp / 2.
+    elif a < -amp / 2.:
+        a = -amp / 2.
+    return a + amp / 2.
 
 def toe_clearance(states, x_ext_2, times):
     alphaF_min = states[:, 1]
@@ -999,9 +1006,9 @@ def toe_clearance(states, x_ext_2, times):
     #
     # toe_clearance = (solutions[:,0]-np.sin(np.deg2rad((alphaF_min)))*length_foot)
     toe_clearance = (ankle_height - np.sin(np.deg2rad((-alphaF_min))) * length_foot)
-    # for i in range(len(toe_clearance)):
-    #     if toe_clearance[i]<0:
-    #         toe_clearance[i] = 0
+    for i in range(len(toe_clearance)):
+        if toe_clearance[i]<0:
+            toe_clearance[i] = 0
     return toe_clearance
 
 
@@ -1034,7 +1041,7 @@ def rect_wave(t, width = 0.745, slope = 100, amp = .8):   #rectangular
 # 0.3m
 (x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle) = set_x_ext()
 ankle = AnkleModel()
-(ta_forces,ta_forces2) = ankle.get_muscle_function_janky()
+(ta_forces,ta_forces2, ta_forces3) = ankle.get_muscle_function_janky()
 # sol = solve_ivp(ankle.get_derivative,[0,6],[0.8,8,-4],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,input))
 # sol = solve_ivp(ankle.get_derivative,[0,3],[0.5,-15,0],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
 # sol = solve_ivp(ankle.get_derivative,[0,0.406],[0.8,-15,20], first_step = 0.01, max_step = 0.01,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
@@ -1044,49 +1051,62 @@ sol = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,0], first_step=0.01,
                 args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, zero_input,ta_forces2))
 sol2 = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,0], first_step=0.01, max_step=0.01,
                  args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, trapezoid_wave,ta_forces))
+sol3 = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,0], first_step=0.01, max_step=0.01,
+                 args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, triangle_wave,ta_forces3))
 times = sol.t
 states = sol.y.T
 times2 = sol2.t
 states2 = sol2.y.T
-print(times)
-print(states[:,0])
-# excitation = np.linspace(0, 0.406, len(states[:,0]))
+times3 = sol3.t
+states3 = sol3.y.T
+print(times3)
+print(states3[:,0])
+#excitation = np.linspace(0, 0.406, len(states[:,0]))
 excitation = [trapezoid_wave(t) for t in times]
 plt.figure()
-plt.plot(excitation, states[:, 0])
+plt.plot(excitation, states2[:, 0])
 plt.xlabel('Excitation')
 plt.ylabel('Activation')
 plt.show(block=False)
 
 toe_clear = toe_clearance(states, x_ext_2, times)
 toe_clear2 = toe_clearance(states2, x_ext_2, times2)
+toe_clear3 = toe_clearance(states3, x_ext_2, times3)
 plt.figure()
 plt.subplot(2, 1, 1)
 plt.plot(times, toe_clear, label='input')
 plt.plot(times2, toe_clear2, label='trap')
+plt.plot(times3, toe_clear3, label='trap_triangle')
+plt.legend
 plt.xlabel('Time (s)')
 plt.ylabel('Toe Clearance')
 plt.subplot(2, 1, 2)
-plt.plot(states[:, 0], toe_clear)
+plt.plot(states[:, 0], toe_clear, label='input')
+plt.plot(states2[:, 0], toe_clear2, label='trap')
+plt.plot(states3[:, 0], toe_clear3, label='trap_triangle')
+plt.legend
 plt.xlabel('Activation')
 plt.ylabel('Toe Clearance')
 plt.show(block=False)
 
 plt.figure()
 plt.subplot(3, 1, 1)
-plt.plot(times, states[:, 0], label='input')
+plt.plot(times, states[:, 0], label='zero input')
 plt.plot(times2, states2[:, 0], label='trap')
+plt.plot(times3, states3[:, 0], label='trap_triangle')
 plt.xlabel('Time (s)')
 plt.ylabel('Activation')
 plt.subplot(3, 1, 2)
-plt.plot(times, states[:, 1], label='input')
+plt.plot(times, states[:, 1], label='zero input')
 plt.plot(times2, states2[:, 1], label='trap')
+plt.plot(times3, states3[:, 1], label='trap_triangle')
 plt.xlabel('Time (s)')
 plt.ylabel('Angle')
 plt.legend()
 plt.subplot(3, 1, 3)
-plt.plot(times, states[:, 2], label='input')
+plt.plot(times, states[:, 2], label='zero input')
 plt.plot(times2, states2[:, 2], label='trap')
+plt.plot(times3, states3[:, 2], label='trap_triangle')
 plt.xlabel('Time (s)')
 plt.ylabel('Rotational velocity')
 plt.legend()
