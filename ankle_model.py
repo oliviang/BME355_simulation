@@ -42,39 +42,38 @@ class AnkleModel:
 
     def get_muscle_function_janky(self):
 
-        activation = [0.,         0.,         0.,         0.,         0.,         0.01196761,
-        0.07479541, 0.19434084, 0.35449393, 0.53071111, 0.70371386, 0.86331714,
-        0.94965515, 0.98145631, 0.99316974, 0.99748419, 0.99907334, 0.99965868,
-        0.99987428, 0.99995369, 0.99998294, 0.99999372, 0.99999769, 0.99999915,
-        0.99999969, 0.99999988, 0.99999996, 0.99999998, 0.99999999, 1.,
-        1. ,        1.,         1.,         1.,         1.,         1.,
-        0.98605855, 0.92337347, 0.84015204, 0.75531488, 0.67813154, 0.617204,
-        0.58541546, 0.59724765]
-        times = [0.,         0.00261406, 0.00522812, 0.00802806, 0.01802806, 0.02802806,
-        0.03802806, 0.04802806, 0.05802806, 0.06802806, 0.07802806, 0.08802806,
-        0.09802806, 0.10802806, 0.11802806, 0.12802806, 0.13802806, 0.14802806,
-        0.15802806, 0.16802806, 0.17802806, 0.18802806, 0.19802806, 0.20802806,
-        0.21802806, 0.22802806, 0.23802806, 0.24802806, 0.25802806, 0.26802806,
-        0.27802806, 0.28802806, 0.29802806, 0.30802806, 0.31802806, 0.32802806,
-        0.33802806, 0.34802806, 0.35802806, 0.36802806, 0.37802806, 0.38802806,
-        0.39802806, 0.40625]
-        times2 = [
-            0., 0.01, 0.01575507, 0.02135926, 0.02686503, 0.03686503,
-            0.04686503, 0.05686503, 0.06686503, 0.07686503, 0.08686503, 0.09686503,
-            0.10686503, 0.11686503, 0.12686503, 0.13686503, 0.14686503, 0.15686503,
-            0.16686503, 0.17686503, 0.18686503, 0.19686503, 0.20686503, 0.21686503,
-            0.22686503, 0.23686503, 0.24686503, 0.25686503, 0.26686503, 0.27686503,
-            0.28686503, 0.29686503, 0.30326988, 0.30958056, 0.31712387, 0.32712387,
-            0.33712387, 0.34712387, 0.35712387, 0.36548359, 0.37376686, 0.3819861,
-            0.39067448, 0.39936285, 0.40625]
-        activation2 = [0., 0., 0.01128956, 0.25518368, 0.50169515, 0.73388424,
-                 0.83072029, 0.87110642, 0.88794974, 0.89497435, 0.89790402, 0.89912586,
-                 0.89963543, 0.89984795, 0.89993659, 0.89997355, 0.89998897, 0.8999954,
-                 0.89999808, 0.8999992, 0.89999967, 0.89999986, 0.89999994, 0.89999998,
-                 0.89999999, 0.9, 0.9, 0.9, 0.9, 0.9,
-                 0.9, 0.9, 0.9, 0.9, 0.9, 0.9,
-                 0.9, 0.9, 0.9, 0.9, 0.9, 0.9,
-                 0.84580168, 0.91674455, 0.9901729]
+        activation = [0.,         0.,         0.,         0.03287644, 0.12253858, 0.26364753,
+         0.43421759, 0.61080924, 0.77889512,0.91318708, 0.96802391, 0.98822214,
+         0.99566182, 0.9984021 , 0.99941144,0.99978321, 0.99992015, 0.99997059,
+         0.99998917, 0.99999601, 0.99999853,0.99999946, 0.9999998 , 0.99999993,
+         0.99999997, 0.99999999, 1.        ,1.        , 1.        , 1.,
+         1.        , 1.        , 1.        ,1.        , 1.        , 0.96396319,
+         0.88721633, 0.80141402, 0.71891738, 0.6478672 , 0.59816108, 0.58465442]
+
+        times = [0.,         0.01,       0.01959471, 0.02959471, 0.03959471, 0.04959471,
+         0.05959471, 0.06959471, 0.07959471, 0.08959471, 0.09959471, 0.10959471,
+         0.11959471, 0.12959471, 0.13959471, 0.14959471, 0.15959471, 0.16959471,
+         0.17959471, 0.18959471, 0.19959471, 0.20959471, 0.21959471, 0.22959471,
+         0.23959471, 0.24959471, 0.25959471, 0.26959471, 0.27959471, 0.28959471,
+         0.29959471, 0.30959471, 0.31959471, 0.32959471, 0.33959471, 0.34959471,
+         0.35959471, 0.36959471, 0.37959471, 0.38959471, 0.39959471, 0.40625   ]
+
+        times2 = [0.,0.00887495, 0.01769211, 0.02769211, 0.03769211, 0.04769211,
+         0.05769211, 0.06769211, 0.07769211, 0.08769211, 0.09769211, 0.10769211,
+         0.11769211, 0.12769211, 0.13769211, 0.14769211, 0.15769211, 0.16769211,
+         0.17769211, 0.18769211, 0.19769211, 0.20769211, 0.21769211, 0.22769211,
+         0.23769211, 0.24769211, 0.25769211, 0.26769211, 0.27769211, 0.28769211,
+         0.29769211, 0.30769211, 0.31769211, 0.32769211, 0.33769211, 0.34769211,
+         0.35769211, 0.36769211, 0.37769211, 0.38769211, 0.39769211, 0.40625]
+
+        activation2 = [0., 0.5881011,  0.82936006, 0.93714762, 0.97684937, 0.99147285,
+         0.99685917, 0.99884313, 0.99957388, 0.99984305, 0.99994219, 0.99997871,
+         0.99999216, 0.99999711, 0.99999894, 0.99999961, 0.99999986, 0.99999995,
+         0.99999998, 0.99999999, 1.        , 1.        , 1.        , 1.,
+         1.        , 1.        , 1.        , 1.        , 1.        , 1.,
+         1.        , 1.        , 1.        , 1.        , 1.        , 1.,
+         1.        , 1.        , 1.        , 1.        , 1.        , 1.        ]
+
         times3 = [0., 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08,
         0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17,
         0.18, 0.19, 0.2, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26,
@@ -88,59 +87,56 @@ class AnkleModel:
         0.73944402, 0.70399636, 0.66910639, 0.63495, 0.60172213, 0.56966156,
         0.53907581, 0.51037245, 0.48410302, 0.46102789, 0.44221469, 0.43327397]
 
-        times4 = [0.,         0.01,       0.01854064, 0.02708129, 0.03708129, 0.04708129,
-        0.05708129, 0.06708129, 0.07708129, 0.08708129, 0.09708129, 0.10708129,
-        0.11708129, 0.12708129, 0.13708129, 0.14708129, 0.15708129, 0.16708129,
-        0.17708129, 0.18708129, 0.19708129, 0.20708129, 0.21708129, 0.22708129,
-        0.23708129, 0.24708129, 0.25708129, 0.26708129, 0.27708129, 0.28708129,
-        0.29708129, 0.30708129, 0.31708129, 0.32708129, 0.33708129, 0.34708129,
-        0.35708129, 0.36708129, 0.37708129, 0.38708129, 0.39708129, 0.40625   ]
-        activation4 = [0.,         0.,         0.00401526, 0.03516778, 0.11916773, 0.24880875,
-        0.40535084, 0.56849131, 0.72491705, 0.86871003, 0.95164153, 0.98218796,
-        0.98700555, 0.93624469, 0.86038808, 0.77977907, 0.70299217, 0.63624279,
-        0.58730285, 0.56856536, 0.56856536, 0.56856536, 0.56551418, 0.53692516,
-        0.5085253,  0.51213107, 0.56055897, 0.64822585, 0.76062309, 0.88266325,
-        0.95678096, 0.98408099, 0.98765761, 0.93651421, 0.86051586, 0.77984858,
-        0.70303556, 0.63627385, 0.58732838, 0.5685894,  0.5685894,  0.5685894 ]
+        #half trap
+        times4 = [0., 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08,
+        0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17,
+        0.18, 0.19, 0.2, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26,
+        0.27, 0.28, 0.29, 0.3, 0.31, 0.32, 0.33, 0.34, 0.35,
+        0.36, 0.37, 0.38, 0.39, 0.4, 0.40625]
+        activation4 = [0.,         0.,         0.,         0.,         0.01691514, 0.06137143,
+         0.13348172, 0.22706431, 0.31234718, 0.37102805, 0.41135884, 0.43907779,
+         0.45812876, 0.47122231, 0.48022137, 0.48640634, 0.49065721, 0.49357879,
+         0.49558677, 0.49696683, 0.49791533, 0.49856723, 0.49901527, 0.4993232,
+         0.49953484, 0.4996803 , 0.49978028, 0.49984899, 0.49989621, 0.49992867,
+         0.49995097, 0.4999663 , 0.49997684, 0.49998408, 0.49998906, 0.49999248,
+         0.49999483, 0.49575929, 0.47785676, 0.45633349, 0.43982931, 0.43585102]
+
         activation_func = interp1d( times,activation, fill_value="extrapolate")
         activation_func2 = interp1d(times2,activation2, fill_value="extrapolate")
         activation_func3 = interp1d(times3, activation3, fill_value="extrapolate")
         activation_func4 = interp1d(times4, activation4, fill_value="extrapolate")
+
         max_isometric_force = 2500
         resting_tendon_length = self.tendon_length
         resting_muscle_length = self.resting_length_muscle_tendon-self.tendon_length
         muscle = HillTypeMuscle(max_isometric_force, resting_muscle_length, resting_tendon_length)
         L = muscle.resting_length_tendon + muscle.resting_length_muscle
+
         ta_length = solve_ivp(self.state_function, [0, 0.4065], [1], max_step=0.01, args=(activation_func,muscle))
-        ta_length2 = solve_ivp(self.state_function, [0, 0.4065], [1], max_step=0.01, args=(zero_input, muscle))
+        ta_length2 = solve_ivp(self.state_function, [0, 0.4065], [1], max_step=0.01, args=(activation_func2, muscle))
         ta_length3 = solve_ivp(self.state_function, [0, 0.4065], [1], max_step=0.01, args=(activation_func3, muscle))
         ta_length4 = solve_ivp(self.state_function, [0, 0.4065], [1], max_step=0.01, args=(activation_func4, muscle))
-        # ta_length = solve_ivp(self.state_function, [0, 0.4065], [1], max_step=0.01, args=(trapezoid_wave,muscle))
-        # ta_length2 = solve_ivp(self.state_function, [0, 0.4065], [1], max_step=0.01, args=(zero_input, muscle))
-        # ta_length3 = solve_ivp(self.state_function, [0, 0.4065], [1], max_step=0.01, args=(triangle_wave, muscle))
-        # ta_length4 = solve_ivp(self.state_function, [0, 0.4065], [1], max_step=0.01, args=(trapezoid_wave_two, muscle))
-        # # print(ta_length.y.T)
-        # print(len(ta_length.t))
-        # print(len(ta_length.y.T))
+        ta_length5 = solve_ivp(self.state_function, [0, 0.4065], [1], max_step=0.01, args=(zero_input, muscle))
         ta_force_function_1 = interp1d(ta_length.t,muscle.get_force(L, ta_length.y.T),fill_value="extrapolate")
         ta_force_function_2 = interp1d(ta_length2.t,muscle.get_force(L, ta_length2.y.T),fill_value="extrapolate")
         ta_force_function_3 = interp1d(ta_length3.t, muscle.get_force(L, ta_length3.y.T), fill_value="extrapolate")
         ta_force_function_4 = interp1d(ta_length4.t, muscle.get_force(L, ta_length4.y.T), fill_value="extrapolate")
-        return ta_force_function_1, ta_force_function_2, ta_force_function_3 , ta_force_function_4
+        ta_force_function_5 = interp1d(ta_length5.t, muscle.get_force(L, ta_length5.y.T), fill_value="extrapolate")
+        return ta_force_function_1, ta_force_function_2, ta_force_function_3 , ta_force_function_4, ta_force_function_5
 
-    def F_m(self, x, x_ext):
-        """
-        :param x: state vector
-        :param x_ext: external states
-        :return: TA muscular force induced by electrical stimulation (Fm)
-        """
-        max_isometric_force = 2000
-        resting_tendon_length = self.resting_length_muscle_tendon
-        resting_muscle_length = .6
-        muscle = HillTypeMuscle(max_isometric_force, resting_muscle_length, resting_tendon_length)
-        # muscle = HillTypeModel(max_isometric_force, resting_muscle_length, resting_tendon_length)
-        # return 1000*(muscle.force_length_contractile(1)*x[0] + muscle.force_length_parallel(0.5) + muscle.force_length_series(1.5))
-        L = muscle.resting_length_tendon + muscle.resting_length_muscle
+    # def F_m(self, x, x_ext):
+    #     """
+    #     :param x: state vector
+    #     :param x_ext: external states
+    #     :return: TA muscular force induced by electrical stimulation (Fm)
+    #     """
+    #     max_isometric_force = 2000
+    #     resting_tendon_length = self.resting_length_muscle_tendon
+    #     resting_muscle_length = .6
+    #     muscle = HillTypeMuscle(max_isometric_force, resting_muscle_length, resting_tendon_length)
+    #     # muscle = HillTypeModel(max_isometric_force, resting_muscle_length, resting_tendon_length)
+    #     # return 1000*(muscle.force_length_contractile(1)*x[0] + muscle.force_length_parallel(0.5) + muscle.force_length_series(1.5))
+    #     L = muscle.resting_length_tendon + muscle.resting_length_muscle
 
     def f_fl(self, x, x_ext):
         """
@@ -952,9 +948,8 @@ def input(t):
     return t / .40625
 
 
-def trapezoid_wave(t, width=0.66, slope=12, amp=1):
-    a = slope * width * signal.sawtooth((2 * np.pi * (t + 0.12)) / width, width=0.5) / 4.
-    # a = slope * width * signal.sawtooth((2 * np.pi * (t + 0.18)) / width, width=0.5) / 4.
+def trapezoid_wave(t, width=0.68, slope=12, amp=1):
+    a = slope * width * signal.sawtooth((2 * np.pi * (t + 0.128)) / width, width=0.5) / 4.
     if a > amp / 2.:
         a = amp / 2.
     elif a < -amp / 2.:
@@ -963,7 +958,6 @@ def trapezoid_wave(t, width=0.66, slope=12, amp=1):
 
 def triangle_wave(t,width =0.46,slope = 4, amp = 1):
     a = slope * width * signal.sawtooth((2 * np.pi * (t)) / width, width=0.5) / 4.
-    # a = slope * width * signal.sawtooth((2 * np.pi * (t + 0.18)) / width, width=0.5) / 4.
     if a > amp / 2.:
         a = amp / 2.
     elif a < -amp / 2.:
@@ -972,12 +966,20 @@ def triangle_wave(t,width =0.46,slope = 4, amp = 1):
 
 def trapezoid_wave_two(t,  width=0.2, slope=11, amp=0.8):
     a = slope * width * signal.sawtooth((2 * np.pi * (t)) / width, width=0.5) / 4.
-    #a = slope * width * signal.sawtooth((2 * np.pi * (t + 0.18)) / width, width=0.5) / 4.
     if a>amp/2.:
         a = amp/2.
     elif a<-amp/2.:
         a = -amp/2.
     return a + amp/2.+0.2
+
+def trapezoid_wave_half(t,width=0.73,slope=7,amp=0.5):
+    a = slope * width * signal.sawtooth((2 * np.pi * (t+0.148)) / width, width=0.5) / 4.
+    if a>amp/2.:
+        a = amp/2.
+    elif a<-amp/2.:
+        a = -amp/2.
+    return a + amp/2.
+
 def toe_clearance(states, x_ext_2, times):
     alphaF_min = states[:, 1]
     # f_new2 = interp1d(times, states[:, 1], fill_value="extrapolate")
@@ -1057,14 +1059,15 @@ def differential_eqn(t, x, x_ext, f_angle):
     x2_dot = x_ext(t)
     return [x1_dot, x2_dot]
 
-
 def shank_derivative(t, x, x_ext_4):
     x1_dot = x_ext_4(t)
     return x1_dot
 
-
 def zero_input(t):
     return 0
+
+def one_input(t):
+    return 1
 
 def rect_wave(t, width = 0.745, slope = 100, amp = .8):   #rectangular
     a = slope * width * signal.sawtooth((2 * np.pi * (t + 0.17)) / width, width=0.5) / 4.    #rect
@@ -1074,23 +1077,31 @@ def rect_wave(t, width = 0.745, slope = 100, amp = .8):   #rectangular
         a = -amp/2.
     return a + amp/2 + 0.1
 
+def calculate_fatigue(activation,times):
+    return np.trapz(activation,times)
+
 # 0.3m
 (x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle) = set_x_ext()
 ankle = AnkleModel()
-(ta_forces,ta_forces2, ta_forces3, ta_forces4) = ankle.get_muscle_function_janky()
+(ta_forces,ta_forces2, ta_forces3, ta_forces4,ta_forces5) = ankle.get_muscle_function_janky()
 # sol = solve_ivp(ankle.get_derivative,[0,6],[0.8,8,-4],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,input))
 # sol = solve_ivp(ankle.get_derivative,[0,3],[0.5,-15,0],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
 # sol = solve_ivp(ankle.get_derivative,[0,0.406],[0.8,-15,20], first_step = 0.01, max_step = 0.01,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
 # sol = solve_ivp(ankle.get_derivative,[0,0.40625],[0,-44,0], first_step = 0.01, max_step = 0.01,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
 # sol = solve_ivp(ankle.get_derivative,[0,0.406],[0.8,-10,45],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
+
+
 sol = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,0], first_step=0.01, max_step=0.01,
-                args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, zero_input,ta_forces2))
+                args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, one_input,ta_forces2))
 sol2 = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,0], first_step=0.01, max_step=0.01,
                  args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, trapezoid_wave,ta_forces))
 sol3 = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,0], first_step=0.01, max_step=0.01,
-                 args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, triangle_wave,ta_forces))
+                 args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, triangle_wave,ta_forces3))
 sol4 = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,0], first_step=0.01, max_step=0.01,
-                 args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, trapezoid_wave_two,ta_forces4))
+                 args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, trapezoid_wave_half,ta_forces4))
+sol5 = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,0], first_step=0.01, max_step=0.01,
+                args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, zero_input,ta_forces5))
+
 times = sol.t
 states = sol.y.T
 times2 = sol2.t
@@ -1099,21 +1110,24 @@ times3 = sol3.t
 states3 = sol3.y.T
 times4 = sol4.t
 states4 = sol4.y.T
-print(times3)
-print(states3[:,0])
-print(times4)
-print(states4[:,0])
+times5 = sol5.t
+states5 = sol5.y.T
+print(times2)
+print(states2[:,0])
+# print(times4)
+# print(states4[:,0])
 #excitation = np.linspace(0, 0.406, len(states[:,0]))
-excitation = [trapezoid_wave(t) for t in times]
-excitation2 = [zero_input(t) for t in times]
-excitation3 = [triangle_wave(t) for t in times]
-excitation4 = [trapezoid_wave_two(t) for t in times]
-
+excitation1 = [one_input(t) for t in times]
+excitation2 = [trapezoid_wave(t) for t in times2]
+excitation3 = [triangle_wave(t) for t in times3]
+excitation4 = [trapezoid_wave_half(t) for t in times4]
+excitation5 = [zero_input(t) for t in times5]
 plt.figure()
-#plt.plot(excitation, states2[:, 0], label='input')
-plt.plot(excitation2, states[:, 0], label='trap')
+plt.plot(excitation1, states[:, 0], label='one input')
+plt.plot(excitation2, states2[:, 0], label='trap')
 plt.plot(excitation3, states3[:, 0], label='trap_triangle')
-plt.plot(excitation4, states4[:, 0], label='two_trap')
+plt.plot(excitation4, states4[:, 0], label='half trap')
+plt.plot(excitation5, states5[:, 0], label='zero input')
 plt.xlabel('Excitation')
 plt.ylabel('Activation')
 plt.legend()
@@ -1123,20 +1137,23 @@ toe_clear = toe_clearance(states, x_ext_2, times)
 toe_clear2 = toe_clearance(states2, x_ext_2, times2)
 toe_clear3 = toe_clearance(states3, x_ext_2, times3)
 toe_clear4 = toe_clearance(states4, x_ext_2, times4)
+toe_clear5 = toe_clearance(states5, x_ext_2, times5)
 plt.figure()
 plt.subplot(2, 1, 1)
-plt.plot(times, toe_clear, label='input')
+plt.plot(times, toe_clear, label='one input')
 plt.plot(times2, toe_clear2, label='trap')
 plt.plot(times3, toe_clear3, label='trap_triangle')
-plt.plot(times4, toe_clear4, label='two_trap')
+plt.plot(times4, toe_clear4, label='half trap')
+plt.plot(times5, toe_clear5, label='zero input')
 plt.legend()
 plt.xlabel('Time (s)')
 plt.ylabel('Toe Clearance')
 plt.subplot(2, 1, 2)
-plt.plot(states[:, 0], toe_clear, label='input')
+plt.plot(states[:, 0], toe_clear, label='one input')
 plt.plot(states2[:, 0], toe_clear2, label='trap')
 plt.plot(states3[:, 0], toe_clear3, label='trap_triangle')
-plt.plot(states4[:, 0], toe_clear4, label='two_trap')
+plt.plot(states4[:, 0], toe_clear4, label='half trap')
+plt.plot(states5[:, 0], toe_clear5, label='zero input')
 plt.legend()
 plt.xlabel('Activation')
 plt.ylabel('Toe Clearance')
@@ -1144,27 +1161,38 @@ plt.show(block=False)
 
 plt.figure()
 plt.subplot(3, 1, 1)
-plt.plot(times, states[:, 0], label='zero input')
+plt.plot(times, states[:, 0], label='one input')
 plt.plot(times2, states2[:, 0], label='trap')
 plt.plot(times3, states3[:, 0], label='trap_triangle')
-plt.plot(times4, states4[:, 0], label='2 traps')
+plt.plot(times4, states4[:, 0], label='half traps')
+plt.plot(times5, states5[:, 0], label='zero input')
 plt.xlabel('Time (s)')
 plt.ylabel('Activation')
 plt.subplot(3, 1, 2)
-plt.plot(times, states[:, 1], label='zero input')
+plt.plot(times, states[:, 1], label='one input')
 plt.plot(times2, states2[:, 1], label='trap')
 plt.plot(times3, states3[:, 1], label='trap_triangle')
-plt.plot(times4, states4[:, 1], label='2 traps')
+plt.plot(times4, states4[:, 1], label='half trap')
+plt.plot(times5, states5[:, 1], label='zero input')
 plt.xlabel('Time (s)')
 plt.ylabel('Angle')
 plt.legend()
 plt.subplot(3, 1, 3)
-plt.plot(times, states[:, 2], label='zero input')
+plt.plot(times, states[:, 2], label='one input')
 plt.plot(times2, states2[:, 2], label='trap')
 plt.plot(times3, states3[:, 2], label='trap_triangle')
-plt.plot(times4, states4[:, 2], label='2 traps')
+plt.plot(times4, states4[:, 2], label='half trap')
+plt.plot(times5, states5[:, 2], label='zero input')
 plt.xlabel('Time (s)')
 plt.ylabel('Rotational velocity')
 plt.legend()
 plt.show(block=False)
+
+fatigue1 = calculate_fatigue(states[:,0],times)
+fatigue2 = calculate_fatigue(states2[:,0],times2)
+fatigue3 = calculate_fatigue(states3[:,0],times3)
+fatigue4 = calculate_fatigue(states4[:,0],times4)
+fatigue5 = calculate_fatigue(states5[:,0],times5)
+print(str(fatigue1)+";"+str(fatigue2)+";"+str(fatigue3)+";"+str(fatigue4)+";"+str(fatigue5))
+
 plt.show()
