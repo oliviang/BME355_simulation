@@ -1091,15 +1091,15 @@ ankle = AnkleModel()
 # sol = solve_ivp(ankle.get_derivative,[0,0.406],[0.8,-10,45],rtol = 1e-5, atol = 1e-8,args=(x_ext_1,x_ext_2,x_ext_3,x_ext_4,trapezoid_wave))
 
 
-sol = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,0], first_step=0.01, max_step=0.01,
+sol = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,-175], first_step=0.01, max_step=0.01,
                 args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, one_input,ta_forces2))
-sol2 = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,0], first_step=0.01, max_step=0.01,
+sol2 = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,-175], first_step=0.01, max_step=0.01,
                  args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, trapezoid_wave,ta_forces))
-sol3 = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,0], first_step=0.01, max_step=0.01,
+sol3 = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,-175], first_step=0.01, max_step=0.01,
                  args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, triangle_wave,ta_forces3))
-sol4 = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,0], first_step=0.01, max_step=0.01,
+sol4 = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,-175], first_step=0.01, max_step=0.01,
                  args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, trapezoid_wave_half,ta_forces4))
-sol5 = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,0], first_step=0.01, max_step=0.01,
+sol5 = solve_ivp(ankle.get_derivative, [0, 0.40625], [0, -44,-175], first_step=0.01, max_step=0.01,
                 args=(x_ext_1, x_ext_2, x_ext_3, x_ext_4,knee_angle, zero_input,ta_forces5))
 
 times = sol.t
